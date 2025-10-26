@@ -27,12 +27,16 @@ Function to pad data using PKCS7
 '''
 def pad(data):
     # Using block size and modulo operator to calculate how many bytes are need
+    print(f"\n=== Padding ===")
+    print(f"Original data length is {len(data)} bytes")
     padding_length = block_size - (len(data) % block_size)
     # Generating padding
+    print(f"{padding_length} bytes of data are needed")
     padding = bytes([padding_length] * padding_length)
+    padded_data = data + padding
 
-    # Returning the padded data
-    return data + padding
+    print(f"Padding complete, total length after padding is {len(padded_data)} bytes")
+    return padded_data
 
 '''
 Function to unpad data
@@ -45,19 +49,27 @@ def unpad(data):
         raise ValueError("Data must not be empty")
     
     # Using the last byte present in data to calculate how many padding bytes exist
+    print(f"\n=== Unpadding ===")
+    print(f"Padded data length is {len(data)} bytes")
     padding_length = data[-1]
+    print(f"{padding_length} bytes of padding found")
 
     # Checking that the padding is valid
+    print("Validating padding length")
     if padding_length > block_size or padding_length == 0:
         raise ValueError("Padding length is invalid")
     
     # Validating that padding bytes are ordered as expected
+    print("Validating padding bytes")
     for i in range(1, padding_length + 1):
         if data[-1] != padding_length:
             raise ValueError("Padding bytes are invalid")
         
+    unpadded_data = data[:-padding_length]
+        
     # Returning the unpadded data
-    return data[:-padding_length]
+    print(f"Unpadding complete, total length after unpadding is {len(unpadded_data)} bytes")
+    return unpadded_data
 
 '''
 To do: Implement a function to generate a key and iv for encryption
