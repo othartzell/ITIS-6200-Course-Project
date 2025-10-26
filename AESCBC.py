@@ -4,9 +4,11 @@
 
 '''
 REFERENCES
+    General Research
     - Basic implementation of AES encryption with padding in python: https://www.askpython.com/python/examples/implementing-aes-with-padding
     - PKCS7 padding in python: https://stackoverflow.com/questions/43199123/encrypting-with-aes-256-and-pkcs7-padding
     - XOR operator in python: https://docs.python.org/3/reference/expressions.html
+    - NIST Advanced Encryption Standard (AES) Publication: https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.197-upd1.pdf
 '''
 
 # === Imports ===
@@ -118,6 +120,7 @@ def xor(b1, b2):
     return bytes(a ^ b for a, b in zip(b1, b2))
 
 # === AES-CBC Mode encryption functions ===
+
 '''
 To do: Implement a function to encrypt a block of data
     - Takes in a block of plaintext and the key generated for the encryption
