@@ -6,11 +6,14 @@
 REFERENCES
     - Basic implementation of AES encryption with padding in python: https://www.askpython.com/python/examples/implementing-aes-with-padding
     - PKCS7 padding in python: https://stackoverflow.com/questions/43199123/encrypting-with-aes-256-and-pkcs7-padding
+    - XOR operator in python: https://docs.python.org/3/reference/expressions.html
 '''
 
-# Imports
+# === Imports ===
+import hashlib
 
 # === Constants ===
+
 # 16 byte blocks for AES
 block_size = 16
 # 32 byte key for encryption
@@ -19,6 +22,7 @@ key_size = 32
 salt_size = 16
 
 # === AES-CBC Mode helper functions ===
+
 '''
 Function to pad data using PKCS7
     - Input: data from user inputted file to encrypt
@@ -72,19 +76,48 @@ def unpad(data):
     return unpadded_data
 
 '''
-To do: Implement a function to generate a key and iv for encryption
+Function to generate a key and IV for encryption
     - Takes in the password entered by the user and salt added to the password
-    - Derives a 32 byte key and 16 byte IV from the password and salt
+    - Derives a 32 byte key and 16 byte IV from the password and salt using sha256
     - Returns the generated key and IV to be used in CBC
 '''
+def generate_parameters(password, salt):
+    print(f"\n=== Generating Key and IV ===")
+    # Calculating the total bytes needed for the key and block
+    total_bytes = key_size + block_size
+    # Converting user entered password to a byte string
+    password_bytes = password.encode('utf-8')
+    
+    print("Deriving a key and IV for encryption")
+    # Deriving key and IV using sha256 and 100000 iterations
+    derived_parameters = hashlib.pbkdf2_hmac(
+        'sha256',
+        password_bytes,
+        salt,
+        100000,
+        dklen = total_bytes
+    )
+
+    # Splitting the derived parameters into key and IV
+    key = derived_parameters[:key_size]
+    iv = derived_parameters[key_size:]
+
+    # Returning key and iv
+    print("Key and IV successfully created")
+    return key, iv
 
 '''
-To do: Implement a function to xor two byte strings
+Function to XOR two byte strings
     - Takes in two byte strings
     - Performs the XOR operation using these byte strings to add entropy for CBC
     - Returns the resulting byte string after XORing
 '''
+def xor(b1, b2):
+    print("\n=== XOR Helper Function ===")
+    print("XOR operation performed on two byte strings")
+    return bytes(a ^ b for a, b in zip(b1, b2))
 
+# === AES-CBC Mode encryption functions ===
 '''
 To do: Implement a function to encrypt a block of data
     - Takes in a block of plaintext and the key generated for the encryption
