@@ -38,44 +38,33 @@ s_box_string = '63 7c 77 7b f2 6b 6f c5 30 01 67 2b fe d7 ab 76' \
 
 s_box = bytearray.fromhex(s_box_string)
 
-def state_from_bytes(data: bytes) -> list[list[int]]:
-    state = [list(data[i*4:(i+1)*4]) for i in range(len(data) // 4)]
+# Returning the state as a 2D array from the byte string
+def state_from_bytes(data: bytes) -> list[list[int]]: 
+    state = [list(data[i*4:(i+1)*4]) for i in range(len(data) // 4)] 
     return state
 
 # Takes a word as input and performs a cyclic permutation and returns the word
-def rot_word(word: list[int]) -> list[int]:
+def rot_word(word: list[int]) -> list[int]: 
     return word[1:] + word[:1]
 
 # Takes a four byte input word and applies the S-box to each of the four bytes to produce an output word
-def sub_word(word: list[int]) -> list[int]:
-    #substituted_word = bytes(s_box[i] for i in word)
-    #return substituted_word
+def sub_word(word: list[int]) -> list[int]: 
     return [s_box[b] for b in word]
 
 # Round constant
-def rcon(i: int) -> list[int]:
-    rcon_lookup = bytearray.fromhex('01020408102040801B36')
-    #rcon_value = bytes([rcon_lookup[i-1], 0, 0, 0])
-    #return rcon_value
+def rcon(i: int) -> list[int]: 
+    rcon_lookup = bytearray.fromhex('01020408102040801B36') 
     return [rcon_lookup[i-1], 0, 0, 0]
 
 # XOR helper function
-def xor_bytes(a: list[int], b: list[int]) -> list[int]:
+def xor_bytes(a: list[int], b: list[int]) -> list[int]: 
     return [x ^ y for (x, y) in zip(a, b)]
 
 # A routine applied to the key to generate round keys for each round
 def key_expansion(key: bytes, nb: int = 4) -> list[list[list[int]]]:
-    
     nk = len(key) // 4
-
     key_bit_length = len(key) * 8
-
-    if key_bit_length == 128:
-        nr = 10
-    elif key_bit_length == 192:
-        nr = 12
-    else:
-        nr = 14
+    nr = {128: 10, 192: 12, 256: 14}[key_bit_length]
 
     w = state_from_bytes(key)
 
@@ -85,7 +74,7 @@ def key_expansion(key: bytes, nb: int = 4) -> list[list[list[int]]]:
             temp = xor_bytes(sub_word(rot_word(temp)), rcon(i // nk))
         elif nk > 6 and i % nk == 4:
             temp = sub_word(temp)
-        w.append(xor_bytes(w[i-nk], temp))
+        w.append(xor_bytes(w[i - nk], temp))
 
     return [w[i*4:(i+1)*4] for i in range(len(w) // 4)]
 
@@ -116,13 +105,9 @@ def xtime(a: int) -> int:
 def mix_column(col: list[int]):
     c_0 = col[0]
     all_xor = col[0] ^ col[1] ^ col[2] ^ col[3]
-
     col[0] ^= xtime(col[0] ^ col[1]) ^ all_xor
-
     col[1] ^= xtime(col[1] ^ col[2]) ^ all_xor
-
     col[2] ^= xtime(col[2] ^ col[3]) ^ all_xor
-
     col[3] ^= xtime(c_0 ^ col[3]) ^ all_xor
 
 # Transformation that operates on the state column by column considered as polynomials over GF(2^8) and multiplied modulo x^4 + 1 (matrix multiplication)
@@ -130,29 +115,18 @@ def mix_columns(state: list[list[int]]):
     for r in state:
         mix_column(r)
 
+# Returning the state in bytes from a 2D array
 def bytes_from_state(state: list[list[int]]) -> bytes:
-    cipher = bytes(state[0] + state[1] + state[2] + state[3])
-    return cipher
+    return bytes(state[0] + state[1] + state[2] + state[3])
+    
 
 def aes_encryption(data: bytes, key: bytes) -> bytes:
-
     state = state_from_bytes(data)
-
     key_schedule = key_expansion(key)
-
     add_round_key(state, key_schedule, round = 0)
-
     key_bit_length = len(key) * 8
 
-    # Number of rounds for AES 128
-    if key_bit_length == 128:
-        nr = 10
-    # Number of rounds for AES 192
-    elif key_bit_length == 192:
-        nr = 12
-    # Number of rounds for AES 256
-    else:
-        nr = 14
+    nr = {128: 10, 192: 12, 256: 14}[key_bit_length]
 
     # Loop for the rounds which apply the 4 transformations outlined by NIST
     for round in range (1, nr):
