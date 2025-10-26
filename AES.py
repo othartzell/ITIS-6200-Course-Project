@@ -2,6 +2,20 @@
 
 # ITIS 6200 Course Project: Implementing AES-CBC Mode encryption from scratch
 
+'''
+REFERENCES
+   From Professor Cyrill Gössi's cryptography with python lectures on YouTube
+   - Professor Gössi's personal website: https://goescy.ch/
+   - Professor Gössi's YouTube channel: https://www.youtube.com/@cyrillgossi
+
+   - AES implementation in python
+       - Part 1: https://www.youtube.com/watch?v=1gCD1pZKc04
+       - Part 2: 
+       - Part 3:
+       - Part 4:
+       - Part 5:
+'''
+
 # AES encryption scheme from scratch
 def aes_encryption(data: bytes, key: bytes) -> bytes:
 
