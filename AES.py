@@ -19,6 +19,11 @@ REFERENCES
         - Part 4: https://www.youtube.com/watch?v=hXFhi2zD_W4
         - Part 5: https://www.youtube.com/watch?v=tyhl7EYmJoM
 '''
+
+# === Implementing an AES encryption scheme that follows NIST standards ===
+# Note: This implementation is not cryptographically secure and is for demonstration purposes only (Side channel attacks, cold boot attacks, key erasure)
+
+# Substitution values for the byte xy in hexidecimal format
 s_box_string = '63 7c 77 7b f2 6b 6f c5 30 01 67 2b fe d7 ab 76' \
                 'ca 82 c9 7d fa 59 47 f0 ad d4 a2 af 9c a4 72 c0' \
                 'b7 fd 93 26 36 3f f7 cc 34 a5 e5 f1 71 d8 31 15' \
@@ -37,6 +42,13 @@ s_box_string = '63 7c 77 7b f2 6b 6f c5 30 01 67 2b fe d7 ab 76' \
                 '8c a1 89 0d bf e6 42 68 41 99 2d 0f b0 54 bb 16'.replace(" ", "")
 
 s_box = bytearray.fromhex(s_box_string)
+
+# Printing the state to identify row vs col major order
+def print_state(state, label="state"):
+    print(f"\n{label}:")
+    for r in range(4):
+        print(" ".join(f"{state[r][c]:02x}" for c in range(4)))
+    print()
 
 # Returning the state as a 2D array from the byte string
 def state_from_bytes(data: bytes) -> list[list[int]]: 
@@ -122,6 +134,9 @@ def bytes_from_state(state: list[list[int]]) -> bytes:
 
 def aes_encryption(data: bytes, key: bytes) -> bytes:
     state = state_from_bytes(data)
+
+    print_state(state, "Initial state (after state_from_bytes)")
+
     key_schedule = key_expansion(key)
     add_round_key(state, key_schedule, round = 0)
     key_bit_length = len(key) * 8
@@ -144,12 +159,14 @@ def aes_encryption(data: bytes, key: bytes) -> bytes:
     shift_rows(state)
     add_round_key(state, key_schedule, round=nr)
 
-    cipher = bytes_from_state(state)
-    return cipher
+    ciphertext = bytes_from_state(state)
+    return ciphertext
+
+# === NIST tests for AES encryption implementation ===
 
 if __name__ == "__main__":
 
-    # NIST AES-128 test vector C.1 (p.35)
+    # NIST AES-128 test vector
     plaintext = bytearray.fromhex('00112233445566778899aabbccddeeff')
     key = bytearray.fromhex('000102030405060708090a0b0c0d0e0f')
     expected_ciphertext = bytearray.fromhex('69c4e0d86a7b0430d8cdb78070b4c55a')
@@ -157,7 +174,7 @@ if __name__ == "__main__":
 
     print(ciphertext == expected_ciphertext)
 
-    # NIST AES-192 test vector C.2 (p.38)
+    # NIST AES-192 test vector
     plaintext = bytearray.fromhex('00112233445566778899aabbccddeeff')
     key = bytearray.fromhex('000102030405060708090a0b0c0d0e0f1011121314151617')
     expected_ciphertext = bytearray.fromhex('dda97ca4864cdfe06eaf70a0ec0d7191')
@@ -165,7 +182,7 @@ if __name__ == "__main__":
 
     print(ciphertext == expected_ciphertext)
 
-    # NIST AES-256 test vector 3 (Ch. C.3, p. 42)
+    # NIST AES-256 test vector
     plaintext = bytearray.fromhex('00112233445566778899aabbccddeeff')
     key = bytearray.fromhex('000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f')
     expected_ciphertext = bytearray.fromhex('8ea2b7ca516745bfeafc49904b496089')
