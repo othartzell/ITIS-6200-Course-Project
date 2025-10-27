@@ -22,6 +22,11 @@ REFERENCES
 
 # === Implementing an AES encryption scheme that follows NIST standards ===
 # Note: This implementation is not cryptographically secure and is for demonstration purposes only (Side channel attacks, cold boot attacks, key erasure)
+
+
+# === This file is a copy of the AES.py file that retains all logic for testing separately to show functionality ===
+
+
 '''
 NIST standard non-linear byte substitution table 
     - Substitution-Permutation cipher
@@ -71,6 +76,13 @@ def bytes_from_state(state: list[list[int]]) -> bytes:
     for i in range(16):
         data[i] = state[i % 4][i // 4]
     return bytes(data)
+
+# Printing the state to identify order, remove after completing testing
+def print_state(state, label="state"):
+    print(f"\n{label}:")
+    for r in range(4):
+        print(" ".join(f"{state[r][c]:02x}" for c in range(4)))
+    print()
 
 '''
 Transformation of bytes
@@ -217,6 +229,9 @@ Performing AES encryption on a block of data
 def aes_encryption(data: bytes, key: bytes) -> bytes:
     # Getting the current state as a 4x4 matrix for transformations
     state = state_from_bytes(data)
+    # Checking the order of the state, remove after completing testing
+    print_state(state, "Initial state after state_from_bytes")
+
     # Expanding the key into a full key schedule containing each round key
     key_schedule = key_expansion(key)
     # Applies first round key by XORing plaintext with round key
@@ -323,9 +338,12 @@ Performing AES decryption on a block of data
 def aes_decryption(data: bytes, key: bytes) -> bytes:
     # Getting the current state as a 4x4 matrix for transformations
     state = state_from_bytes(data)
+    # Checking the order of the state, remove after completing testing
+    print_state(state, "Initial state in decryption after state_from_bytes")
+
     # Expanding the key into a full key schedule containing each round key
     key_schedule = key_expansion(key)
-    # Checking the key size to determine how many rounds are needed per NIST standards
+        # Checking the key size to determine how many rounds are needed per NIST standards
     key_bit_length = len(key) * 8
     nr = {128: 10, 192: 12, 256: 14}[key_bit_length]
 
@@ -347,3 +365,36 @@ def aes_decryption(data: bytes, key: bytes) -> bytes:
     # Returning the plaintext in bytes from the array after transformations
     plaintext = bytes_from_state(state)
     return plaintext
+
+# === NIST tests for AES encryption implementation ===
+if __name__ == "__main__":
+
+    # NIST AES-128 test vector 1
+    plaintext = bytearray.fromhex('00112233445566778899aabbccddeeff')
+    key = bytearray.fromhex('000102030405060708090a0b0c0d0e0f')
+    expected_ciphertext = bytearray.fromhex('69c4e0d86a7b0430d8cdb78070b4c55a')
+    ciphertext = aes_encryption(plaintext, key)
+    recovered_plaintext = aes_decryption(ciphertext, key)
+
+    print(ciphertext == expected_ciphertext)
+    print(recovered_plaintext == plaintext)
+
+    # NIST AES-192 test vector 2
+    plaintext = bytearray.fromhex('00112233445566778899aabbccddeeff')
+    key = bytearray.fromhex('000102030405060708090a0b0c0d0e0f1011121314151617')
+    expected_ciphertext = bytearray.fromhex('dda97ca4864cdfe06eaf70a0ec0d7191')
+    ciphertext = aes_encryption(plaintext, key)
+    recovered_plaintext = aes_decryption(ciphertext, key)
+
+    print(ciphertext == expected_ciphertext)
+    print(recovered_plaintext == plaintext)
+
+    # NIST AES-256 test vector 3
+    plaintext = bytearray.fromhex('00112233445566778899aabbccddeeff')
+    key = bytearray.fromhex('000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f')
+    expected_ciphertext = bytearray.fromhex('8ea2b7ca516745bfeafc49904b496089')
+    ciphertext = aes_encryption(plaintext, key)
+    recovered_plaintext = aes_decryption(ciphertext, key)
+
+    print(ciphertext == expected_ciphertext)
+    print(recovered_plaintext == plaintext)
