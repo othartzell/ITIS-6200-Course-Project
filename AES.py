@@ -22,8 +22,13 @@ REFERENCES
 
 # === Implementing an AES encryption scheme that follows NIST standards ===
 # Note: This implementation is not cryptographically secure and is for demonstration purposes only (Side channel attacks, cold boot attacks, key erasure)
-
-# Substitution values for the byte xy in hexidecimal format
+'''
+NIST standard non-linear byte substitution table 
+    - Substitution-Permutation cipher
+    - To be used for sub bytes and key expansion functions
+    - Performs a one to one substitution of a byte value
+    - In hexadecimal format
+'''
 s_box_string = '63 7c 77 7b f2 6b 6f c5 30 01 67 2b fe d7 ab 76' \
                 'ca 82 c9 7d fa 59 47 f0 ad d4 a2 af 9c a4 72 c0' \
                 'b7 fd 93 26 36 3f f7 cc 34 a5 e5 f1 71 d8 31 15' \
@@ -41,79 +46,157 @@ s_box_string = '63 7c 77 7b f2 6b 6f c5 30 01 67 2b fe d7 ab 76' \
                 'e1 f8 98 11 69 d9 8e 94 9b 1e 87 e9 ce 55 28 df' \
                 '8c a1 89 0d bf e6 42 68 41 99 2d 0f b0 54 bb 16'.replace(" ", "")
 
+# Converting the hex string into an array of bytes
 s_box = bytearray.fromhex(s_box_string)
 
-# Printing the state to identify row vs col major order
+# === Helper Functions ===
+'''
+Converts a flat 16 byte input from the plaintext and converts it to a 4x4 matrix
+    - Column major order as specified by NIST
+    - i % 4 is the row index 0-3
+    - i // 4 is the column index 0-3
+'''
+def state_from_bytes(data: bytes) -> list[list[int]]:
+    state = [[0] * 4 for _ in range(4)]
+    for i in range(16):
+        state[i % 4][i // 4] = data[i]
+    return state
+
+'''
+Converts a 4x4 matrix into a flat 16 byte output of ciphertext
+    - Reverse of state from bytes
+'''
+def bytes_from_state(state: list[list[int]]) -> bytes:
+    data = bytearray(16)
+    for i in range(16):
+        data[i] = state[i % 4][i // 4]
+    return bytes(data)
+
+# Printing the state to identify order, remove after completing testing
 def print_state(state, label="state"):
     print(f"\n{label}:")
     for r in range(4):
         print(" ".join(f"{state[r][c]:02x}" for c in range(4)))
     print()
 
-# Returning the state as a 2D array from the byte string
-def state_from_bytes(data: bytes) -> list[list[int]]: 
-    state = [list(data[i*4:(i+1)*4]) for i in range(len(data) // 4)] 
-    return state
+'''
+Transformation of bytes
+    - Applies the bitwise XOR operation
+    - Takes in two values and uses them to perform the XOR operation
+'''
+def xor_bytes(a: list[int], b: list[int]) -> list[int]: 
+    return [x ^ y for (x, y) in zip(a, b)]
 
-# Takes a word as input and performs a cyclic permutation and returns the word
+'''
+Transformation of bytes
+    - Polynomial representation of the input byte is multiplied by x mod m(x)
+    - Produces the polynomial representation of the output byte
+    - Left shifting of bits
+'''
+def xtime(a: int) -> int:
+    if a & 0x80:
+        return ((a << 1) ^ 0x1b) & 0xff
+    return a << 1
+
+'''
+Transformation of words
+    - Each of the four bytes of the word are permuted cyclically
+    - Moves the first byte to the end and left shifts the other bytes
+    - Used for key expansion to generate a new 4 byte word at each step
+    - Ensures each round key is different
+'''
 def rot_word(word: list[int]) -> list[int]: 
     return word[1:] + word[:1]
 
-# Takes a four byte input word and applies the S-box to each of the four bytes to produce an output word
+'''
+Transformation of words
+    - S-box is applied to each of the four bytes of the word
+    - Used during key expansion
+    - Applies non-linear substitution on a single 4 byte word
+    - Part of generating new round keys from the original key and previous words
+    - Makes the new key bytes non-linear in respect to the old ones
+'''
 def sub_word(word: list[int]) -> list[int]: 
     return [s_box[b] for b in word]
 
-# Round constant
+'''
+Word array for the round constant
+    - NIST standard value
+    - Used in key expansion
+    - Ensures each round key is unique
+    - Prevents each key being a predictable function of the previous key
+    - Only affects the first byte of the word
+'''
 def rcon(i: int) -> list[int]: 
     rcon_lookup = bytearray.fromhex('01020408102040801B36') 
     return [rcon_lookup[i-1], 0, 0, 0]
 
-# XOR helper function
-def xor_bytes(a: list[int], b: list[int]) -> list[int]: 
-    return [x ^ y for (x, y) in zip(a, b)]
-
-# A routine applied to the key to generate round keys for each round
+'''
+Routine that is applied to the key to generate 4*(Nr + 1) words
+    - Four words are generated for each of the Nr + 1 applications of add round key
+    - Output is a linear array of words
+    - Used to generate a set of round keys, one for each AES round plus the initial key
+'''
 def key_expansion(key: bytes, nb: int = 4) -> list[list[list[int]]]:
     nk = len(key) // 4
     key_bit_length = len(key) * 8
     nr = {128: 10, 192: 12, 256: 14}[key_bit_length]
 
-    w = state_from_bytes(key)
+    w = [list(key[i*4:(i+1)*4]) for i in range(nk)]
 
     for i in range(nk, nb * (nr + 1)):
-        temp = w[i-1]
+        temp = w[i-1][:]
         if i % nk == 0:
             temp = xor_bytes(sub_word(rot_word(temp)), rcon(i // nk))
         elif nk > 6 and i % nk == 4:
             temp = sub_word(temp)
         w.append(xor_bytes(w[i - nk], temp))
 
-    return [w[i*4:(i+1)*4] for i in range(len(w) // 4)]
+    key_schedule = []
+    for r in range(0, len(w), nb):
+        round_key = [[w[r + c][r_] for c in range(nb)] for r_ in range(4)]
+        key_schedule.append(round_key)
 
-# Transformation of the state in which a round key is combined with the state by applying the bitwise XOR operation
+    return key_schedule
+
+'''
+Transformation of the state in which a round key is combined with the state
+    - Applies the bitwise XOR operation
+    - Each round key consists of four words from the key schedule
+    - Each round key is combined with a column of the state
+'''
 def add_round_key(state: list[list[int]], key_schedule: list[list[list[int]]], round: int):
     round_key = key_schedule[round]
     for r in range(len(state)):
         state[r] = [state[r][c] ^ round_key[r][c] for c in range(len(state[0]))]
 
-# An invertible non linear transformation of the state in which a substitution table S-box is applied to each byte in the state
+'''
+Invertible and non-linear transformation of the state
+    - The substitution table S-box is applied independently to each byte in the state
+    - Each byte is replaced by its multiplicative inverse except 0x00
+    - Occurs once per round after shift rows but before mix columns
+'''
 def sub_bytes(state: list[list[int]]):
     for r in range(len(state)):
         state[r] = [s_box[state[r][c]] for c in range(len(state[0]))]
 
-# The bytes in the last 3 rows of the state are cyclically shifted over different number of bytes, first row is not shifted
+'''
+Transformation of the state in which bytes in the last three rows of the state are cyclically shifted
+    - The number of positions shifted depends on the row index r where 0 <= r < 4
+    - Moves each byte by r positions to the left in the row
+    - Left most r bytes are cycled around to the right end
+    - The first row where r = 0 remains unchanged by this function
+'''
 def shift_rows(state: list[list[int]]):
-    state[0][1], state[1][1], state[2][1], state[3][1] = state[1][1], state[2][1], state[3][1], state[0][1]
-    state[0][2], state[1][2], state[2][2], state[3][2] = state[2][2], state[3][2], state[0][2], state[1][2]
-    state[0][3], state[1][3], state[2][3], state[3][3] = state[3][3], state[0][3], state[1][3], state[2][3]
+    for r in range(1, 4):
+        state[r] = state[r][r:] + state[r][:r]
 
-# Multiplication by x (left shift)
-def xtime(a: int) -> int:
-    if a & 0x80:
-        return ((a << 1) ^ 0x1b) & 0xff
-    return a << 1
-
-# Performing matrix multiplication to sift the columns
+'''
+Transformation of the state that multiplies each of the four columns of the state by a fixed matrix
+    - Matrix multiplication for one 4 byte column
+    - Mutates col by replacing the 4 bytes with transformed values
+    - Follows NIST guidelines on calculations for correct matrix multiplication
+'''
 def mix_column(col: list[int]):
     c_0 = col[0]
     all_xor = col[0] ^ col[1] ^ col[2] ^ col[3]
@@ -122,48 +205,54 @@ def mix_column(col: list[int]):
     col[2] ^= xtime(col[2] ^ col[3]) ^ all_xor
     col[3] ^= xtime(c_0 ^ col[3]) ^ all_xor
 
-# Transformation that operates on the state column by column considered as polynomials over GF(2^8) and multiplied modulo x^4 + 1 (matrix multiplication)
+# Loops through all 4 columns of the state to apply mix_column for correct transformation
 def mix_columns(state: list[list[int]]):
-    for r in state:
-        mix_column(r)
+    for c in range(4):
+        col = [state[r][c] for r in range(4)]
+        mix_column(col)
+        for r in range(4):
+            state[r][c] = col[r]
 
-# Returning the state in bytes from a 2D array
-def bytes_from_state(state: list[list[int]]) -> bytes:
-    return bytes(state[0] + state[1] + state[2] + state[3])
-    
-
+# === AES Encryption Function ===
+'''
+Performing AES encryption on a block of data
+    - Uses a block of plaintext and a key to perform encryption
+    - Implements the AES encryption process defined by NIST
+    - Takes a block of plaintext and a key
+    - Expands the key into round keys
+    - Applies the transformations specified over multiple rounds
+'''
 def aes_encryption(data: bytes, key: bytes) -> bytes:
+    # Getting the current state as an array for transformations
     state = state_from_bytes(data)
+    # Checking the order of the state, remove after completing testing
+    print_state(state, "Initial state after state_from_bytes")
 
-    print_state(state, "Initial state (after state_from_bytes)")
-
+    # Expanding the key into a full key schedule containing each round key
     key_schedule = key_expansion(key)
+    # Applies first round key by XORing plaintext with round key
     add_round_key(state, key_schedule, round = 0)
+    # Checking the key size to determine how many rounds are needed per NIST standards
     key_bit_length = len(key) * 8
-
     nr = {128: 10, 192: 12, 256: 14}[key_bit_length]
 
     # Loop for the rounds which apply the 4 transformations outlined by NIST
     for round in range (1, nr):
-        # Non-linear byte substitution that operates on each byte independently using a substitution table
         sub_bytes(state)
-        # Transformation of the state in which the bytes in the last three rows of the state are cyclically shifted
         shift_rows(state)
-        # Transformation of the state that multiplies each of the four columns of the state by a fixed matrix
         mix_columns(state)
-        # Transformation of the state where a round key is combined with the state by applying bitwise XOR
         add_round_key(state, key_schedule, round)
 
-    # Final round of transformations
+    # Final round of transformations, mix columns is omitted per NIST standards
     sub_bytes(state)
     shift_rows(state)
     add_round_key(state, key_schedule, round=nr)
 
+    # Returning the ciphertext in bytes from the array after transformations
     ciphertext = bytes_from_state(state)
     return ciphertext
 
 # === NIST tests for AES encryption implementation ===
-
 if __name__ == "__main__":
 
     # NIST AES-128 test vector
