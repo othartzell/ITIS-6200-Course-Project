@@ -12,10 +12,10 @@ REFERENCES
 '''
 
 # === Imports ===
-import os
+from typing import Optional, Tuple
+import os, hashlib
 import tkinter as tk
 from tkinter import filedialog, messagebox
-from AES import aes_encryption, aes_decryption, xor_bytes
 from CBC import cbc_encrypt, cbc_decrypt
 
 # === Constants ===
@@ -28,15 +28,29 @@ salt_size = 16
 # === AES-CBC Mode helper functions ===
 
 '''
-To do: Implement KDF to generate key and iv
-'''
+To do: Implement KDF to generate key and iv from scratch
 def get_secrets(password: str):
     pass
 '''
-To do: Implement a hash function to hash password + salt
+# Using third party hashlib to generate secret values for encryption to test functionality of AES-CBC
+def get_secrets(password:str, salt: Optional[bytes] = None) -> Tuple[bytes, bytes, bytes]:
+    if salt is None:
+        salt = os.urandom(salt_size)
+    
+    key_iv = hashlib.pbkdf2_hmac("sha256", password.encode(), salt, 10000, dklen=32 + 16)
+    key = key_iv[:32]
+    iv = key_iv[32:]
+
+    return key, iv, salt
+
 '''
+To do: Implement a hash function to hash password + salt from scratch
 def hash_password(password: str, salt: bytes):
     pass
+'''
+# Using third party library hashlib for password hashing to test functionality of AES-CBC
+def hash_password(password: str, salt: bytes):
+        return hashlib.sha256(password.encode() + salt).digest()
 
 # === Wrappers for CBC encryption/decryption ===
 def encrypt(plaintext: bytes, key: bytes, iv: bytes) -> bytes:
@@ -47,35 +61,33 @@ def decrypt(ciphertext: bytes, key: bytes, iv: bytes) -> bytes:
 
 # === Simple GUI to demonstrate encrypting and decrypting files ===
 class Encryptonator9000:
-    def __init__(self, root):
+    def __init__(self, root: tk.Tk):
         self.root = root
         self.root.title("Encryptonator 9000")
         self.root.geometry("500x250")
-        self.filepath = None
+        self.filepath: Optional[str] = None
 
-        # === UI setup ===
-        tk.Label(root, text="No file selected", wraplength=400)\
-            .grid(row=0, column=0, columnspan=2, pady=5)
-        self.file_label = tk.Label(root, text="")
-        tk.Button(root, text="Select File", command=self.select_file)\
-            .grid(row=1, column=0, columnspan=2, pady=5)
+        self.file_label = tk.Label(root, text="No file selected", wraplength=400)
+        self.file_label.grid(row=0, column=0, columnspan=2, pady=5)
+        tk.Button(root, text="Select File", command=self.select_file).grid(row=1, column=0, columnspan=2, pady=5)
 
         tk.Label(root, text="Password:").grid(row=2, column=0, pady=5)
         self.password_entry = tk.Entry(root, show="*", width=40)
         self.password_entry.grid(row=2, column=1, pady=5)
 
-        tk.Button(root, text="Encrypt", command=self.encrypt_file)\
-            .grid(row=3, column=0, padx=10, pady=10)
-        tk.Button(root, text="Decrypt", command=self.decrypt_file)\
-            .grid(row=3, column=1, padx=10, pady=10)
+        tk.Button(root, text="Encrypt", command=self.encrypt_file).grid(row=3, column=0, padx=10, pady=10)
+        tk.Button(root, text="Decrypt", command=self.decrypt_file).grid(row=3, column=1, padx=10, pady=10)
 
-    def select_file(self):
+    def select_file(self) -> None:
         path = filedialog.askopenfilename()
         if path:
             self.filepath = path
-            self.file_label.config(text=path)
+            self.file_label.config(text=os.path.basename(path))
+        else:
+            self.filepath = None
+            self.file_label.config(text="No file selected")
 
-    def encrypt_file(self):
+    def encrypt_file(self) -> None:
         if not self.filepath:
             messagebox.showerror("Error", "Please select a file.")
             return
@@ -84,23 +96,25 @@ class Encryptonator9000:
             messagebox.showerror("Error", "Please enter a password.")
             return
 
-        with open(self.filepath, "rb") as f:
-            plaintext = f.read()
+        try:
+            with open(self.filepath, "rb") as f:
+                plaintext = f.read()
 
-        # === derive secrets ===
-        key, iv, salt = get_secrets(password)
-        password_hash = hash_password(password, salt)
+            key, iv, salt = get_secrets(password)
+            password_hash = hash_password(password, salt)
+            ciphertext = cbc_encrypt(plaintext, key, iv)
 
-        ciphertext = cbc_encrypt(plaintext, key, iv)
+            with open(self.filepath, "wb") as f:
+                f.write(salt + password_hash + ciphertext)
+            messagebox.showinfo("Success", f"File overwritten (UTF-8 error demo):\n{os.path.basename(self.filepath)}")
 
-        # prepend salt + hash to ciphertext for storage
-        encrypted = salt + password_hash + ciphertext
-        with open(self.filepath + ".enc", "wb") as f:
-            f.write(encrypted)
+        except Exception as e:
+            messagebox.showerror("Encryption Error", str(e))
+        finally:
+            self.file_label.config(text="No file selected")
+            self.password_entry.delete(0, tk.END)
 
-        messagebox.showinfo("Success", "File encrypted successfully!")
-
-    def decrypt_file(self):
+    def decrypt_file(self) -> None:
         if not self.filepath:
             messagebox.showerror("Error", "Please select a file.")
             return
@@ -109,24 +123,32 @@ class Encryptonator9000:
             messagebox.showerror("Error", "Please enter a password.")
             return
 
-        with open(self.filepath, "rb") as f:
-            data = f.read()
+        try:
+            with open(self.filepath, "rb") as f:
+                data = f.read()
 
-        salt = data[:16]
-        stored_hash = data[16:48]
-        ciphertext = data[48:]
+            salt = data[:salt_size]
+            stored_hash = data[salt_size:salt_size + 32]
+            ciphertext = data[salt_size + 32:]
 
-        if hash_password(password, salt) != stored_hash:
-            messagebox.showerror("Error", "Invalid password.")
-            return
+            if hash_password(password, salt) != stored_hash:
+                messagebox.showerror("Error", "Invalid password.")
+                return
 
-        key, iv, _ = get_secrets(password, salt)
-        plaintext = cbc_decrypt(ciphertext, key, iv)
+            key, iv, _ = get_secrets(password, salt)
+            plaintext = cbc_decrypt(ciphertext, key, iv)
 
-        with open(self.filepath.replace(".enc", ".dec"), "wb") as f:
-            f.write(plaintext)
+            output_path = self.filepath
+            with open(output_path, "wb") as f:
+                f.write(plaintext)
 
-        messagebox.showinfo("Success", "File decrypted successfully!")
+            messagebox.showinfo("Success", f"File decrypted successfully:\n{os.path.basename(output_path)}")
+
+        except Exception as e:
+            messagebox.showerror("Decryption Error", f"Failed to decrypt: {e}")
+        finally:
+            self.file_label.config(text="No file selected")
+            self.password_entry.delete(0, tk.END)
 
 # === Run ===
 if __name__ == "__main__":
