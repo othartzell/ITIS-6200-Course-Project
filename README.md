@@ -79,16 +79,14 @@ encryptonator9000.py is the main program file. In this file there is a simple GU
 
 ## Repository Structure
 + /ITIS-6200-COURSE-PROJECT
-+ ├── AES.py
-+ ├── CBC.py
-+ ├── Encryptonator9000.py
-+ ├── Hash.py
-+ ├── README.md
-+ ├── test.txt
-+ └── Testing
-    + ├── AESTest.py
-    + ├── CBCTest.py
-    + └── HashTest.py
++ |- AES.py
++ |- CBC.py
++ |- Encryptonator9000.py
++ |- Hash.py
++ |_ Testing
+    + |- AESTest.py
+    + |- CBCTest.py
+    + |_ HashTest.py
 
 ## References:
 ### General Research
