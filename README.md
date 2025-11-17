@@ -82,12 +82,12 @@ encryptonator9000.py is the main program file. In this file there is a simple GU
 
 Repository Structure
 '''
-/ITIS-6200-COURSE-PROJECT
-├── Testing/    Test files to show NIST test vectors
-├── AES.py/  AES Block cipher implementation
-├── CBC.py/  CBC Mode implementation
-├── Encryptonator9000.py    Main program
-└── Hash.py/     SHA-256 Hash implementation
+    /ITIS-6200-COURSE-PROJECT
+    |-- Testing/    Test files to show NIST test vectors
+    |-- AES.py/  AES Block cipher implementation
+    |-- CBC.py/  CBC Mode implementation
+    |-- Encryptonator9000.py    Main program
+    |__ Hash.py/     SHA-256 Hash implementation
 '''
 
 References:
