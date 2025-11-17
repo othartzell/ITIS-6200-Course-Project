@@ -9,11 +9,12 @@ REFERENCES
     - PKCS7 padding in python: https://stackoverflow.com/questions/43199123/encrypting-with-aes-256-and-pkcs7-padding
     - XOR operator in python: https://docs.python.org/3/reference/expressions.html
     - NIST Advanced Encryption Standard (AES) Publication: https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.197-upd1.pdf
+    - NIST Secure Hash Standard (SHS): https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.180-4.pdf
 '''
 
 # === Imports ===
 from typing import Optional, Tuple
-import os, hashlib
+import os
 import tkinter as tk
 from tkinter import filedialog, messagebox
 
@@ -30,18 +31,18 @@ salt_size = 16
 # === AES-CBC Mode helper functions ===
 
 '''
-To do: Implement KDF to generate key and iv from scratch
-def get_secrets(password: str):
-    pass
+Simple KDF function to generate secret values for encryption and decryption
 '''
-# Using third party hashlib to generate secret values for encryption to test functionality of AES-CBC
-def get_secrets(password:str, salt: Optional[bytes] = None) -> Tuple[bytes, bytes, bytes]:
+def get_secrets(password: str, salt: Optional[bytes] = None) -> Tuple[bytes, bytes, bytes]:
     if salt is None:
         salt = os.urandom(salt_size)
-    
-    key_iv = hashlib.pbkdf2_hmac("sha256", password.encode(), salt, 10000, dklen=32 + 16)
-    key = key_iv[:32]
-    iv = key_iv[32:]
+
+    key_material = password.encode() + salt
+    for _ in range(10000):
+        key_material = SHA256(key_material)
+
+    key = key_material[:32]
+    iv = SHA256(key_material + salt)[:16]
 
     return key, iv, salt
 
@@ -103,7 +104,7 @@ class Encryptonator9000:
 
             with open(self.filepath, "wb") as f:
                 f.write(salt + password_hash + ciphertext)
-            messagebox.showinfo("Success", f"File overwritten (UTF-8 error demo):\n{os.path.basename(self.filepath)}")
+            messagebox.showinfo("Success", f"File overwritten:\n{os.path.basename(self.filepath)}")
 
         except Exception as e:
             messagebox.showerror("Encryption Error", str(e))
