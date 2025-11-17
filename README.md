@@ -86,9 +86,9 @@ encryptonator9000.py is the main program file. In this file there is a simple GU
 + ├── README.md
 + ├── test.txt
 + └── Testing
-+    ├── AESTest.py
-+    ├── CBCTest.py
-+    └── HashTest.py
+    + ├── AESTest.py
+    + ├── CBCTest.py
+    + └── HashTest.py
 
 ## References:
 ### General Research
