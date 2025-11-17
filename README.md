@@ -78,17 +78,17 @@ All AES round transformations, CBC and padding behavior, and the SHA-256 hash fu
 encryptonator9000.py is the main program file. In this file there is a simple GUI implementation using tkinter. By running this file, the program will allow a user to select a file to encrypt or decrypt on their machine. The user inputs a password before encryption and must enter the same password for decryption. Passwords are processes through the from scratch SHA-256 implementation to derive encryption keys and are stored as salted hashes.
 
 ## Repository Structure
-.
-├── AES.py
-├── CBC.py
-├── Encryptonator9000.py
-├── Hash.py
-├── README.md
-├── test.txt
-└── Testing
-    ├── AESTest.py
-    ├── CBCTest.py
-    └── HashTest.py
++ /ITIS-6200-COURSE-PROJECT
++ ├── AES.py
++ ├── CBC.py
++ ├── Encryptonator9000.py
++ ├── Hash.py
++ ├── README.md
++ ├── test.txt
++ └── Testing
++    ├── AESTest.py
++    ├── CBCTest.py
++    └── HashTest.py
 
 ## References:
 ### General Research
