@@ -1,7 +1,7 @@
 # ITIS-6200-Course-Project
 This project demonstrates understanding of symmetric cryptography by implementing AES-CBC Mode from scratch in Python to encrypt and decrypt files locally on a machine. This project includes three major components. 
 
-##1. AES Block Cipher
+## 1. AES Block Cipher
 A NIST compliant from scratch implementation of AES encryption and decryption in python, includes the following functions outlined by NIST:
 - State matrix construction
 - SubBytes
@@ -12,7 +12,7 @@ A NIST compliant from scratch implementation of AES encryption and decryption in
 - S-box and inverse S-box lookup tables
 This AES implementation is the ECB primitive for CBC mode.
 
-##2. AES-CBC Mode Encryption
+## 2. AES-CBC Mode Encryption
 A NIST compliant from scratch implementation of Cipher Block Chaining, includes the following functions outlined by NIST:
 - PKCS#7 padding
 - XOR with previous ciphertext block or IV
@@ -20,7 +20,7 @@ A NIST compliant from scratch implementation of Cipher Block Chaining, includes 
 - CBC decrypting with unpadding
 CBC mode is used to introduce randomness and diffusion to the AES block cipher.
 
-##3. SHA-256 Hash Function
+## 3. SHA-256 Hash Function
 A NIST compliant from scratch implementation of SHA-256 cryptographic hashing, includes the following functions outlined by NIST:
 - Message preprocessing for byte conversion, padding, and length encoding
 - Message schedule construction
@@ -32,8 +32,8 @@ A NIST compliant from scratch implementation of SHA-256 cryptographic hashing, i
 - Final 256 bit digest construction
 This hash function is used to generate secret values for encryption/decryption and securely storing the password with salt to decrypt a file. 
 
-##Code Breakdown
-###AES Module Key Functions:
+## Code Breakdown
+### AES Module Key Functions:
 - state_from_bytes() Converts 16 bytes into a 4x4 AES state matrix
 - bytes_from_state() Converts an AES state matrix into 16 bytes
 - xor_bytes() XOR function to be used in AES operations
@@ -48,14 +48,14 @@ This hash function is used to generate secret values for encryption/decryption a
 - aes_encryption() AES encryption for a single block
 - aes_decryption() AES decryption for a single block
 
-###AES-CBC Module Key Functions:
+### AES-CBC Module Key Functions:
 - pad() Applies PKCS#7 padding to plaintext
 - unpad() Validates and removes padding from ciphertext
 - cbc_encrypt() XOR + AES encryption in CBC mode
 - cbc_decrypt() AES decrypt + XOR + unpad
 CBC mode requires a key, IV, and plaintext/ciphertext
 
-###SHA-256 Module Key Functions:
+### SHA-256 Module Key Functions:
 - H_0_words The eight 32-bit initial hash state defined by NIST
 - H_0() Returns a copy of the initial state for each hash computation
 - SHA256_Pad_Parse(message) Implements the required preprocessing steps of padding, parsing, and splitting the message into words
@@ -71,13 +71,13 @@ CBC mode requires a key, IV, and plaintext/ciphertext
 - K256 NIST 64 constants converted to Python integers
 - SHA256(message) Full SHA-256 implementation
 
-##Testing and Validation
+## Testing and Validation
 All AES round transformations, CBC and padding behavior, and the SHA-256 hash function were validated using NIST test vectors. These test vectors are seen within the Testing directory
 
-##How to use this program
+## How to use this program
 encryptonator9000.py is the main program file. In this file there is a simple GUI implementation using tkinter. By running this file, the program will allow a user to select a file to encrypt or decrypt on their machine. The user inputs a password before encryption and must enter the same password for decryption. Passwords are processes through the from scratch SHA-256 implementation to derive encryption keys and are stored as salted hashes.
 
-##Repository Structure
+## Repository Structure
 .
 ├── AES.py
 ├── CBC.py
@@ -90,8 +90,8 @@ encryptonator9000.py is the main program file. In this file there is a simple GU
     ├── CBCTest.py
     └── HashTest.py
 
-##References:
-###General Research
+## References:
+### General Research
 - NIST Advanced Encryption Standards (AES): https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.197-upd1.pdf
 - NIST Cryptographic Standards and Guidelines: https://csrc.nist.gov/projects/cryptographic-standards-and-guidelines/example-values
 - NIST Block Cipher Modes of Operation, Cipher Block Chaining (CBC): https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Standards-and-Guidelines/documents/examples/TDES_CBC.pdf
@@ -100,7 +100,7 @@ encryptonator9000.py is the main program file. In this file there is a simple GU
 - PKCS7 padding in python: https://stackoverflow.com/questions/43199123/encrypting-with-aes-256-and-pkcs7-padding
 - XOR operator in python: https://docs.python.org/3/reference/expressions.html
 
-###From Professor Cyrill Gössi's cryptography with python lectures on YouTube
+### From Professor Cyrill Gössi's cryptography with python lectures on YouTube
 - Professor Gössi's personal website: https://goescy.ch/
 - Professor Gössi's YouTube channel: https://www.youtube.com/@cyrillgossi
 
@@ -119,5 +119,5 @@ encryptonator9000.py is the main program file. In this file there is a simple GU
     - Part 2: https://www.youtube.com/watch?v=dNX3MSJnuPw
 
 
-##Security Disclaimer:
+## Security Disclaimer:
 This code is not cryptographically secure for real world implementations. This project is to show proof of concept and understanding by implementing the logic for AES-CBC and Hashing from scratch. Vulnerabilities to timing attacks, side channel attacks, weak randomness, and more may be exploitable.
