@@ -81,12 +81,14 @@ How to use this program
 encryptonator9000.py is the main program file. In this file there is a simple GUI implementation using tkinter. By running this file, the program will allow a user to select a file to encrypt or decrypt on their machine. The user inputs a password before encryption and must enter the same password for decryption. Passwords are processes through the from scratch SHA-256 implementation to derive encryption keys and are stored as salted hashes.
 
 Repository Structure
+'''
 /ITIS-6200-COURSE-PROJECT
 ├── Testing/    Test files to show NIST test vectors
 ├── AES.py/  AES Block cipher implementation
 ├── CBC.py/  CBC Mode implementation
 ├── Encryptonator9000.py    Main program
 └── Hash.py/     SHA-256 Hash implementation
+'''
 
 References:
 General Research
