@@ -16,7 +16,9 @@ from typing import Optional, Tuple
 import os, hashlib
 import tkinter as tk
 from tkinter import filedialog, messagebox
+
 from CBC import cbc_encrypt, cbc_decrypt
+from Hash import SHA256
 
 # === Constants ===
 
@@ -43,14 +45,9 @@ def get_secrets(password:str, salt: Optional[bytes] = None) -> Tuple[bytes, byte
 
     return key, iv, salt
 
-'''
-To do: Implement a hash function to hash password + salt from scratch
+# Using from scratch SHA256 hash function to hash the inputted password
 def hash_password(password: str, salt: bytes):
-    pass
-'''
-# Using third party library hashlib for password hashing to test functionality of AES-CBC
-def hash_password(password: str, salt: bytes):
-        return hashlib.sha256(password.encode() + salt).digest()
+        return SHA256(password.encode() + salt)
 
 # === Wrappers for CBC encryption/decryption ===
 def encrypt(plaintext: bytes, key: bytes, iv: bytes) -> bytes:
