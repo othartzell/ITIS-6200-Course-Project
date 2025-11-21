@@ -75,7 +75,7 @@ CBC mode requires a key, IV, and plaintext/ciphertext
 All AES round transformations, CBC and padding behavior, and the SHA-256 hash function were validated using NIST test vectors. These test vectors are seen within the Testing directory
 
 ## How to use this program
-encryptonator9000.py is the main program file. In this file there is a simple GUI implementation using tkinter. By running this file, the program will allow a user to select a file to encrypt or decrypt on their machine. The user inputs a password before encryption and must enter the same password for decryption. Passwords are processes through the from scratch SHA-256 implementation to derive encryption keys and are stored as salted hashes.
+Encryptonator9000.py is the main program file. Pull the repo and open Encryptonator9000.py in an IDE or navigate to the files location on your machine in terminal. From the IDE or terminal run the program. In this file there is a simple GUI implementation using tkinter. By running this file, the GUI will allow a user to select a file to encrypt or decrypt. Navigate to a file on your machine and enter a password to encrypt or decrypt, and click the corresponding button to perform the action. After encrypting, the file will be overwritten with ciphertext with the hash of the password concatenated. After decrypting, the file will be overwritten with its original plaintext. 
 
 ## Repository Structure
 + /ITIS-6200-COURSE-PROJECT
